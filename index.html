@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Send review text</title>
+<!--
+  Tap-to-text page (v0.4). Static file, hosted on GitHub Pages. Used by every client.
+  The phone number and message arrive after "#" in the link, which browsers never send
+  to the server, so no customer data reaches GitHub. The page only fills in a text;
+  the owner still taps Send in their own Messages app.
+-->
+<style>
+  :root {
+    --bg:#f3f4f6; --card:#ffffff; --text:#1f2937; --muted:#6b7280;
+    --box:#f3f4f6; --border:#e5e7eb; --brand:#1a5fb4; --brand-text:#ffffff;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1115; --card:#1b1e24; --text:#e5e7eb; --muted:#9ca3af;
+            --box:#262a31; --border:#2d323a; --brand:#3b7ddd; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  body { padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .card { max-width:480px; margin:0 auto; background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:26px 22px; }
+  .label { font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--brand); }
+  h1 { font-size:24px; line-height:1.3; margin:10px 0 4px; }
+  .muted { color:var(--muted); font-size:16px; margin:0 0 18px; }
+  .box { background:var(--box); border-radius:12px; padding:14px 16px; font-size:17px; line-height:1.5;
+    white-space:pre-wrap; word-break:break-word; margin-bottom:20px; }
+  .btn { display:block; width:100%; text-align:center; text-decoration:none; border:0; cursor:pointer;
+    font-family:inherit; font-size:19px; font-weight:700; line-height:1.2; padding:18px; border-radius:10px;
+    background:var(--brand); color:var(--brand-text); }
+  .btn2 { display:block; width:100%; margin-top:12px; padding:15px; border-radius:10px; cursor:pointer;
+    font-family:inherit; font-size:17px; font-weight:600; line-height:1.2; background:transparent; color:var(--text);
+    border:1px solid var(--border); }
+  .small { font-size:14px; line-height:1.5; margin:16px 0 0; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="label">Review request · Text</div>
+  <div id="ok" class="hidden">
+    <h1 id="title">Send a review text</h1>
+    <p class="muted" id="to"></p>
+    <div class="box" id="msg"></div>
+    <a class="btn" id="open" href="#">Open text message</a>
+    <button class="btn2" id="copy" type="button">Copy message</button>
+    <p class="muted small">If Messages doesn’t open, tap Copy message, then paste it into a new text to this number.</p>
+  </div>
+  <div id="bad" class="hidden">
+    <h1>This link is incomplete</h1>
+    <p class="muted">It’s missing a valid phone number. Open the link from the original email again.</p>
+  </div>
+</main>
+<script>
+function render() {
+  document.getElementById('ok').classList.add('hidden');
+  document.getElementById('bad').classList.add('hidden');
+  var params = new URLSearchParams(location.hash.slice(1));
+  var digits = (params.get('p') || '').replace(/\D/g, '');
+  if (digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+  var msg = (params.get('m') || '').slice(0, 400);
+  var name = (params.get('n') || '').slice(0, 40);
+
+  if (digits.length !== 10) { document.getElementById('bad').classList.remove('hidden'); return; }
+
+  var pretty = '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
+  document.getElementById('title').textContent = name ? 'Send ' + name + ' a review text' : 'Send a review text';
+  document.getElementById('to').textContent = pretty;
+  document.getElementById('msg').textContent = msg;
+  // "?&body=" is the form that works on both Android and iPhone Messages.
+  document.getElementById('open').href = 'sms:+1' + digits + '?&body=' + encodeURIComponent(msg);
+  document.getElementById('ok').classList.remove('hidden');
+
+}
+render();
+window.addEventListener('hashchange', render);
+
+(function () {
+  var copyBtn = document.getElementById('copy');
+  copyBtn.addEventListener('click', function () {
+    var msg = document.getElementById('msg').textContent;
+    function done() { copyBtn.textContent = 'Copied ✓'; setTimeout(function () { copyBtn.textContent = 'Copy message'; }, 2000); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(msg).then(done, fallback);
+    } else { fallback(); }
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById('msg'));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      try { document.execCommand('copy'); done(); } catch (e) { copyBtn.textContent = 'Press and hold the message to copy'; }
+    }
+  });
+})();
+</script>
+</body>
+</html>
